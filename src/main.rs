@@ -1,44 +1,35 @@
-use bevy::prelude::*;
+use minesweeper::MSBoard;
+use minesweeper::Position;
+use minesweeper::GameState;
 
-#[derive(Component)]
-struct Person;
+use rand::Rng;
 
-#[derive(Component)]
-struct Name(String);
+fn main() {
 
-pub struct HelloPlugin;
+    let width: u8 = 20;
+    let height: u8 = 20;
 
-impl Plugin for HelloPlugin {
-    fn build(&self, app: &mut App) {
-        app.insert_resource(GreetTimer(Timer::from_seconds(2.0, true)))
-            .add_startup_system(add_people)
-            .add_system(greet_people);
-    }
-}
+    let mut board: MSBoard = MSBoard::new(width, height, 40);
+    
+    loop {
 
-fn add_people(mut commands: Commands) {
-    commands.spawn().insert(Person).insert(Name("Elaina Proctor".to_string()));
-    commands.spawn().insert(Person).insert(Name("Renzo Hume".to_string()));
-    commands.spawn().insert(Person).insert(Name("Zayna Nieves".to_string()));
-}
+        let x: u8 = rand::thread_rng().gen_range(0..width); 
+        let y: u8 = rand::thread_rng().gen_range(0..height); 
 
-struct GreetTimer(Timer);
-
-fn greet_people(time: Res<Time>,
-                mut timer: ResMut<GreetTimer>,
-                query: Query<&Name, With<Person>>) {
-
-    if timer.0.tick(time.delta()).just_finished() {
-        for name in query.iter() {
-            println!("hello {}!", name.0);
+        let state: GameState = board.send_move(Position { x,y, });
+        println!("Sending move - ({},{})", x, y);
+        match state { 
+            GameState::Lost => {
+                println!("You lose!");
+                break;
+            },
+            GameState::Won => {
+                println!("You win!");
+                break;
+            },
+            GameState::StillPlaying => {
+                continue;
+            }
         }
     }
 }
-
-fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins)
-        .add_plugin(HelloPlugin)
-        .run();
-}
-
